@@ -14,3 +14,4 @@ int main(void){
   printf("%s",(char*)f);
   return 0;
 }
+//OSはMac,コンパイラはgccです.
