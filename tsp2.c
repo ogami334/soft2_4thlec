@@ -21,6 +21,11 @@ typedef struct
   char **dot;
 } Map;
 
+typedef struct
+{
+    double sum_d;
+    int *seq;
+} Answer;
 // 整数最大値をとる関数
 int max(const int a, const int b)
 {
@@ -102,9 +107,12 @@ int main(int argc, char**argv)
   int *route = (int*)calloc(n, sizeof(int));
   // 訪れた町を記録するフラグ
   int *visited = (int*)calloc(n, sizeof(int));
-
-  const double d = solve(city,n,route,visited);
-  plot_cities(fp, map, city, n, route);
+  for (int i=1;i<n;i++) {
+      route[i] =-1;
+  }
+  visited[0] =1;
+  const double d = persolve(city,n,route,visited);
+  //plot_cities(fp, map, city, n, route);
   printf("total distance = %f\n", d);
   for (int i = 0 ; i < n ; i++){
     printf("%d -> ", route[i]);
@@ -202,7 +210,7 @@ double solve(const City *city, int n, int *route, int *visited)
 
 double persolve(const City *city, int n, int *route, int *visited) {
   int start = -1;
-  for(int i = 0 ; i < n-1 ; i++){
+  for(int i = 0 ; i < n ; i++){
     if (route[i] == -1) {
       start = i;
       break;
@@ -210,25 +218,31 @@ double persolve(const City *city, int n, int *route, int *visited) {
   }
   // パターンが確定した場合（再帰の終端）
   if (start == -1){
-    printf("[ ");
-    for(int i = 0 ; i < n-1 ; i++){
+    double sum_d = 0;
+    for (int i = 0 ; i < n ; i++){
+        const int c0 = route[i];
+        const int c1 = route[(i+1)%n]; // nは0に戻る
+        sum_d += distance(city[c0],city[c1]);
+    }
+    /*printf("[ ");
+    for(int i = 0 ; i < n ; i++){
       printf("%d ",route[i]);
     }
-    printf("]\n");
-    return 0;
+    printf("]\n");*/
+    printf("%lf\n",sum_d);
+    return sum_d;
   }
 
   // それ以外の場合は一つパターンを確定させて再帰するのを残りの数だけ繰り返す
-  for (int i = 1 ; i < n ; i++){
+  for (int i = 0 ; i < n ; i++){
     if(!visited[i]){
       route[start] = i;
       visited[i] = 1;
-      persolve(city,n-1,route,visited);
+      persolve(city,n,route,visited);
       route[start] = -1;
       visited[i] = 0;
     }
   }
-  return 0;
 
 }
 //number :n-1 
