@@ -72,6 +72,26 @@ double load_double(const char *argvalue)
   return ret;
 }
 
+Itemset *load_itemset(char *filename) {
+  FILE *fp;
+  if ((fp = fopen(filename,"rb")) == NULL) {
+      printf("Cannot open the file %s",filename);
+  }
+  Itemset *list = (Itemset*)malloc(sizeof(Itemset));
+  int number;
+  fread(&number, sizeof(int),1,fp);
+  Item *item = (Item*)malloc(sizeof(Item) * number);
+  double buf[2 * number];
+  fread(buf , sizeof(double),2 *number,fp);
+  for (int i = 0 ; i < number ; i++){
+    item[i].value = buf[i];
+    item[i].weight = buf[i + number];
+  }
+  *list = (Itemset){.number = number, .item = item};
+  return list;
+
+}
+
 // main関数
 // プログラム使用例: ./knapsack 10 20
 //  10個の品物を設定し、キャパ20 でナップサック問題をとく
@@ -82,15 +102,12 @@ int main (int argc, char**argv)
     fprintf(stderr, "usage: %s <filename> <max capacity (double)>\n",argv[0]);
     exit(1);
   }
-  FILE fp;
-  if ((fp = fopen(argv[1],"r") == NULL)) {
-      printf("Cannot open the file %s",argv[1]);
-  }
+  Itemset *items =load_itemset(argv[1]);
 
   
   // 個数の上限はあらかじめ定めておく
   const int max_items = 100;
-
+  const int n = items->number;
   //const int n = load_int(argv[1]);
   assert( n <= max_items ); // assert で止める
 
@@ -101,7 +118,7 @@ int main (int argc, char**argv)
 
   // 乱数シードを1にして、初期化 (ここは変更可能)
   int seed = 1; 
-  Itemset *items = init_itemset(n, seed);
+  //Itemset *items = init_itemset(n, seed);
   print_itemset(items);
 
   // ソルバーで解く
