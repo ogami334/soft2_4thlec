@@ -2,10 +2,10 @@
 #include <stdlib.h>
 
 typedef struct matrix{
-    int a;
-    int b;
-    int c;
-    int d;
+    long a;
+    long b;
+    long c;
+    long d;
 } Matrix;
 
 Matrix mul(Matrix,Matrix);
@@ -13,8 +13,8 @@ Matrix powan(int);
 
 int main(int argc,char **argv) {
     int n =atoi(argv[1]);//あとで変える
-    int fibon =powan(n-1).a + powan(n-1).b;
-    printf("%d\n",fibon);
+    long fibon =powan(n-1).a + powan(n-1).b;
+    printf("%ld\n",fibon);
     return 0;
 }
 
@@ -39,4 +39,3 @@ Matrix powan(int n) {
         return mul(mul(powan((n-1)/2), powan((n-1)/2)), A);
     }
 }
-//割とすぐオーバーフローしてしまいます
