@@ -13,7 +13,13 @@ Matrix powan(int);
 
 int main(int argc,char **argv) {
     int n =atoi(argv[1]);//あとで変える
-    long fibon =powan(n-1).a + powan(n-1).b;
+    long fibon;
+    if (n ==0 || n==1) {
+        fibon =1;
+    }
+    else {
+        fibon =powan(n-1).a + powan(n-1).b;
+    }
     printf("%ld\n",fibon);
     return 0;
 }
