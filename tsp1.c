@@ -22,6 +22,7 @@ typedef struct
   char **dot;
 } Map;
 
+
 // 整数最大値をとる関数
 int max(const int a, const int b)
 {
@@ -65,7 +66,11 @@ void free_map_dot(Map m)
   free(m.dot);
 }
 
-void swap (int n,int *pattern,int i,int j);
+void swap_int (int n,int *pattern,int i,int j) {
+    int tmp = pattern[i];
+    pattern[i] = pattern[j];
+    pattern[j] = tmp; 
+}
 
 double calculate_total_distance(int n,int *pattern,City *city) {
     double val =0;
@@ -74,9 +79,11 @@ double calculate_total_distance(int n,int *pattern,City *city) {
     for (int i=0;i<n-2;i++) {
         val +=distance(city[pattern[i]],city[pattern[i+1]]);
     }
+    return val;
 
 }//パターンが与えられたときに距離を返す関数O(n)
-int* generate_patterns(int n) {
+
+int* generate_routes(int n) {
     int *pattern = (int *) malloc (sizeof(int) * (n-1));
     int flag[n-1];
     for (int i=0;i<n-1;i++) {
@@ -98,18 +105,28 @@ int* generate_patterns(int n) {
 Answer local_optimize(int n, int *pattern, City *city) {
     int flag_optim =1;
     double minval =calculate_total_distance(n,pattern,city);
-    int *record =(int *) malloc (sizeof(int) * (n-1) );
+    int *record =(int *) malloc (sizeof(int) * (n-1) );//全探索中に見つかった一番いいやつを保存しておく
     while (!flag_optim) {
         flag_optim =1;//いったん1にしておき、より良い局所解が見つかれば0に更新
         for (int i=0;i<n-1;i++) {
             for (int j=i+1;j<n-1;j++) {
-              
-
-                
+                int *tmp_pattern =(int *) malloc (sizeof(int) * (n-1));
+                memcpy(tmp_pattern,pattern,sizeof(int) * (n-1));
+                swap_int(n,tmp_pattern,i,j);
+                double value =calculate_total_distance(n, tmp_pattern, city);
+                if (value < minval) {
+                    minval =value;
+                    memcpy(record,tmp_pattern,sizeof(int) * (n-1));
+                    flag_optim =0;
+                }
+                else {
+                  free(tmp_pattern);
+                }
             }
         }
-    }//cityが必要
-    return (Answer) {.sum_d = ,.pattern =};
+        memcpy(pattern,record,sizeof(int) *n);
+    }
+  return (Answer) {.dist = minval ,.route = pattern};
 }
 City *load_cities(const char *filename, int *n)
 {
