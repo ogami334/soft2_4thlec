@@ -78,13 +78,13 @@ void swap_int (int n,int *pattern,int i,int j) {
 }
 
 double calculate_total_distance(int n,int *pattern,City *city) {
-    double val =0;
-    val +=distance(city[0],city[pattern[0]]);
-    val +=distance(city[pattern[n-2]],city[0]);
+    double dist =0;
+    dist +=distance(city[0],city[pattern[0]]);
+    dist +=distance(city[pattern[n-2]],city[0]);
     for (int i=0;i<n-2;i++) {
-        val +=distance(city[pattern[i]],city[pattern[i+1]]);
+        dist +=distance(city[pattern[i]],city[pattern[i+1]]);
     }
-    return val;
+    return dist;
 
 }//パターンが与えられたときに距離を返す関数O(n)
 
