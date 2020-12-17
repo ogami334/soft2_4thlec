@@ -49,10 +49,10 @@ double solve(const City *city, int n, int *route, int *visited);
 Map init_map(const int width, const int height);
 void free_map_dot(Map m);
 City *load_cities(const char* filename,int *n);
-int* generate_patterns(int n);//n-1個の都市を訪れる順番を決める関数
-Answer local_optimize(int n,int *pattern,City *city);
-double calculate_total_distance(int n,int *pattern,City *city);
-void swap (int n,int *pattern,int i,int j);
+int* generate_routes(int n);//n-1個の都市を訪れる順番を決める関数
+Answer local_optimize(int n,int *pattern,City *city);//ランダムに与えられた初期ルートを基に曲所解を返す関数
+double calculate_total_distance(int n,int *pattern,City *city);//与えられたルートに対して総距離を返す関数
+void swap (int n,int *pattern,int i,int j);//int型配列の二要素をswapする関数
 
 
 
@@ -88,8 +88,8 @@ double calculate_total_distance(int n,int *pattern,City *city) {
 
 }//パターンが与えられたときに距離を返す関数O(n)
 
-int* generate_patterns(int n) {
-    int *pattern = (int *) malloc (sizeof(int) * (n-1));
+int* generate_routes(int n) {
+    int *route = (int *) malloc (sizeof(int) * (n-1));
     int flag[n-1];
     for (int i=0;i<n-1;i++) {
         flag[i]=0;
@@ -98,40 +98,40 @@ int* generate_patterns(int n) {
     while (index < n-1)  {
         int s =rand()%(n-1) +1;//1~n-1の値を入れる
         if (flag[s-1] == 0) {
-            pattern[index] =s;
+            route[index] =s;
             index +=1;
             flag[s-1]=1;
         }
     }
-    return pattern;
+    return route;
 }
 
-Answer local_optimize(int n, int *pattern, City *city) {
+Answer local_optimize(int n, int *route, City *city) {
     int flag_optim =0;
-    double minval =calculate_total_distance(n,pattern,city);
+    double minval =calculate_total_distance(n,route,city);
     int *record =(int *) malloc (sizeof(int) * (n-1) );//全探索中に見つかった一番いいやつを保存しておく
-    memcpy(record,pattern,sizeof(int) *(n-1));
+    memcpy(record,route,sizeof(int) *(n-1));
     while (!flag_optim) {
         flag_optim =1;//いったん1にしておき、より良い局所解が見つかれば0に更新
         for (int i=0;i<n-1;i++) {
             for (int j=i+1;j<n-1;j++) {
-                int *tmp_pattern =(int *) malloc (sizeof(int) * (n-1));
-                memcpy(tmp_pattern,pattern,sizeof(int) * (n-1));
-                swap_int(n,tmp_pattern,i,j);
-                double value =calculate_total_distance(n, tmp_pattern, city);
+                int *tmp_route =(int *) malloc (sizeof(int) * (n-1));
+                memcpy(tmp_route,route,sizeof(int) * (n-1));
+                swap_int(n,tmp_route,i,j);
+                double value =calculate_total_distance(n, tmp_route, city);
                 if (value < minval) {
                     minval =value;
-                    memcpy(record,tmp_pattern,sizeof(int) * (n-1));
+                    memcpy(record,tmp_route,sizeof(int) * (n-1));
                     flag_optim =0;
                 }
-                else {
-                  free(tmp_pattern);
-                }
+                free(tmp_route);
+
             }
         }
-        memcpy(pattern,record,sizeof(int) *n);
+        memcpy(route,record,sizeof(int) *n);
     }
-  return (Answer) {.dist = minval ,.route = pattern};
+  free(record);
+  return (Answer) {.dist = minval ,.route = route};
 }
 City *load_cities(const char *filename, int *n)
 {
@@ -170,13 +170,14 @@ int main(int argc, char**argv)
   srand((unsigned int)time(NULL));
   double min_dist=100000000;
   int *min_route =(int*) malloc(sizeof(int) * (n-1) );
-  for (int i=0 ;i<10000;i++) {
-      int *pattern =generate_patterns(n);
+  for (int i=0 ;i<1000;i++) {
+      int *pattern =generate_routes(n);
       Answer ans =local_optimize(n,pattern,city);
       if (ans.dist<min_dist) {
         min_dist =ans.dist;
         memcpy(min_route,ans.route,sizeof(int) * (n-1));
-      }  
+      } 
+      free(ans.route);
   }
   // 町の初期配置を表示
   int *for_plot =(int *) calloc(n,sizeof(int));
@@ -185,13 +186,6 @@ int main(int argc, char**argv)
   }
   plot_cities(fp, map, city, n, NULL);
   sleep(1);
-
-  /*// 訪れる順序を記録する配列を設定
-  int *route = (int*)calloc(n, sizeof(int));
-  // 訪れた町を記録するフラグ
-  int *visited = (int*)calloc(n, sizeof(int));
-
-  const double d = solve(city,n,route,visited);*/
   plot_cities(fp, map, city, n, for_plot);
   printf("total distance = %f\n", min_dist);
   printf("0 -> ");
@@ -203,7 +197,6 @@ int main(int argc, char**argv)
   // 動的確保した環境ではfreeをする
   free(for_plot);
   free(min_route);
-  //free(visited);
   free(city);
   
   return 0;
