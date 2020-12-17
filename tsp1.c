@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h> // strtol のエラー判定用
-#include <time.h>
+#include <time.h>//乱数生成用
 
 // 町の構造体（今回は2次元座標）を定義
 typedef struct
@@ -96,7 +96,6 @@ int* generate_patterns(int n) {
     }
     int index =0;
     while (index < n-1)  {
-        //printf("%d\n",index);
         int s =rand()%(n-1) +1;//1~n-1の値を入れる
         if (flag[s-1] == 0) {
             pattern[index] =s;
@@ -104,10 +103,6 @@ int* generate_patterns(int n) {
             flag[s-1]=1;
         }
     }
-    for (int i=0;i<n-1;i++) {
-      printf("%d ",pattern[i]);
-    }
-    printf("\n");
     return pattern;
 }
 
@@ -115,6 +110,7 @@ Answer local_optimize(int n, int *pattern, City *city) {
     int flag_optim =0;
     double minval =calculate_total_distance(n,pattern,city);
     int *record =(int *) malloc (sizeof(int) * (n-1) );//全探索中に見つかった一番いいやつを保存しておく
+    memcpy(record,pattern,sizeof(int) *(n-1));
     while (!flag_optim) {
         flag_optim =1;//いったん1にしておき、より良い局所解が見つかれば0に更新
         for (int i=0;i<n-1;i++) {
@@ -122,10 +118,6 @@ Answer local_optimize(int n, int *pattern, City *city) {
                 int *tmp_pattern =(int *) malloc (sizeof(int) * (n-1));
                 memcpy(tmp_pattern,pattern,sizeof(int) * (n-1));
                 swap_int(n,tmp_pattern,i,j);
-                /*for (int i=0;i<n-1;i++) {
-                  printf("%d ",tmp_pattern[i]);
-                }
-                printf("\n");*/
                 double value =calculate_total_distance(n, tmp_pattern, city);
                 if (value < minval) {
                     minval =value;
@@ -177,43 +169,42 @@ int main(int argc, char**argv)
   assert( n > 1 && n <= max_cities); // さすがに都市数100は厳しいので
   srand((unsigned int)time(NULL));
   double min_dist=100000000;
-  for (int i=0 ;i<100;i++) {
+  int *min_route =(int*) malloc(sizeof(int) * (n-1) );
+  for (int i=0 ;i<10000;i++) {
       int *pattern =generate_patterns(n);
       Answer ans =local_optimize(n,pattern,city);
       if (ans.dist<min_dist) {
         min_dist =ans.dist;
+        memcpy(min_route,ans.route,sizeof(int) * (n-1));
       }  
-      for (int i=0;i<n-1;i++) {
-        printf("%d ",ans.route[i]);
-      }  
-      printf("\n");
-      printf("local optvalue : %lf\n",ans.dist);
   }
-  printf("%lf\n",min_dist);
-  /*int *pattern =generate_patterns(n);
-  Answer ans =local_optimize(n,pattern,city);
-  printf("local optvalue : %lf\n",ans.dist);*/
   // 町の初期配置を表示
-  //plot_cities(fp, map, city, n, NULL);
-  //sleep(1);
+  int *for_plot =(int *) calloc(n,sizeof(int));
+  for (int i=0;i<n-1;i++) {
+    for_plot[i+1] =min_route[i];
+  }
+  plot_cities(fp, map, city, n, NULL);
+  sleep(1);
 
   /*// 訪れる順序を記録する配列を設定
   int *route = (int*)calloc(n, sizeof(int));
   // 訪れた町を記録するフラグ
   int *visited = (int*)calloc(n, sizeof(int));
 
-  const double d = solve(city,n,route,visited);
-  plot_cities(fp, map, city, n, route);
-  printf("total distance = %f\n", d);
-  for (int i = 0 ; i < n ; i++){
-    printf("%d -> ", route[i]);
+  const double d = solve(city,n,route,visited);*/
+  plot_cities(fp, map, city, n, for_plot);
+  printf("total distance = %f\n", min_dist);
+  printf("0 -> ");
+  for (int i = 0 ; i < n-1 ; i++){
+    printf("%d -> ", min_route[i]);
   }
   printf("0\n");
 
   // 動的確保した環境ではfreeをする
-  free(route);
-  free(visited);
-  free(city);*/
+  free(for_plot);
+  free(min_route);
+  //free(visited);
+  free(city);
   
   return 0;
 }
@@ -277,73 +268,4 @@ double distance(City a, City b)
 }
 
 
-Answer search(const City *city, int n, int *route, int *visited);
 
-double solve(const City *city, int n, int *route, int *visited)
-{
-  route[0] = 0; // 循環した結果を避けるため、常に0番目からスタート
-  visited[0] = 1;
-
-  Answer ans = search(city, n, route, visited);
-  
-  memcpy(route, ans.route, sizeof(int)*n);
-  free(ans.route);
-  return ans.dist;
-}
-
-Answer search(const City *city, int n, int *route, int *visited){
-  int start = 0;
-  // 訪問した個数を数える
-  for (int i = 1; i < n ; i++){
-    if (!route[i]){
-      start = i;
-      break;
-    }
-  }
-  // 全て訪問したケース（ここが再帰の終端条件）
-  if (start == 0){
-    double sum_d = 0;
-    for (int i = 0 ; i < n ; i++){
-      const int c0 = route[i];
-      const int c1 = route[(i+1)%n]; // nは0に戻る
-      sum_d += distance(city[c0],city[c1]);
-    }
-    int *retarg = (int*)malloc(sizeof(int)*n);
-    memcpy(retarg, route, sizeof(int)*n);
-    
-    return (Answer){.dist = sum_d, .route = retarg};
-  }
-
-
-  // 特定の分岐における最小の巡回経路を調べる
-  Answer min = {.dist = 10000000000, .route = NULL};
-  for (int i = 1 ; i < n ; i++){
-    // 未訪問なら訪れる
-    if(!visited[i]){
-      if(i == 2 && !visited[1]) continue; // 逆順の巡回経路を抑制
-
-      route[start] = i; 
-      visited[i] = 1;
-
-      Answer tmp = search(city, n, route, visited);
-
-      // 最小の巡回経路かどうか確認
-      if ( tmp.dist < min.dist ){
-	free(min.route);
-	min = tmp;
-      }
-      else{
-	free(tmp.route);
-      }
-
-      route[start] = 0;
-      visited[i] = 0;
-    }
-  }
-  
-  return min;
-}
-
-//main関数ないでランダムに初期値を生成(random_generate関数)
-//local_optimize関数で局所最適解を返す
-//今まで得られた解と比較
