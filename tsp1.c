@@ -22,6 +22,11 @@ typedef struct
   char **dot;
 } Map;
 
+typedef struct ans{
+  double dist;
+  int *route;
+} Answer;
+
 
 // 整数最大値をとる関数
 int max(const int a, const int b)
@@ -75,7 +80,7 @@ void swap_int (int n,int *pattern,int i,int j) {
 double calculate_total_distance(int n,int *pattern,City *city) {
     double val =0;
     val +=distance(city[0],city[pattern[0]]);
-    val +=distance(city[pattern[n-1]],city[0]);
+    val +=distance(city[pattern[n-2]],city[0]);
     for (int i=0;i<n-2;i++) {
         val +=distance(city[pattern[i]],city[pattern[i+1]]);
     }
@@ -83,7 +88,7 @@ double calculate_total_distance(int n,int *pattern,City *city) {
 
 }//パターンが与えられたときに距離を返す関数O(n)
 
-int* generate_routes(int n) {
+int* generate_patterns(int n) {
     int *pattern = (int *) malloc (sizeof(int) * (n-1));
     int flag[n-1];
     for (int i=0;i<n-1;i++) {
@@ -91,14 +96,18 @@ int* generate_routes(int n) {
     }
     int index =0;
     while (index < n-1)  {
-        printf("%d\n",index);
-        int s =rand()%(n-1) +1;
+        //printf("%d\n",index);
+        int s =rand()%(n-1) +1;//1~n-1の値を入れる
         if (flag[s-1] == 0) {
             pattern[index] =s;
             index +=1;
             flag[s-1]=1;
         }
     }
+    for (int i=0;i<n-1;i++) {
+      printf("%d ",pattern[i]);
+    }
+    printf("\n");
     return pattern;
 }
 
@@ -164,6 +173,8 @@ int main(int argc, char**argv)
   assert( n > 1 && n <= max_cities); // さすがに都市数100は厳しいので
   srand((unsigned int)time(NULL));
   int *pattern =generate_patterns(n);
+  Answer ans =local_optimize(n,pattern,city);
+  printf("local optvalue : %lf\n",ans.dist);
   /*for (int i=0;i<n;i++) {
       printf("%d ",pattern[i]);
   }
@@ -251,10 +262,6 @@ double distance(City a, City b)
   return sqrt(dx * dx + dy * dy);
 }
 
-typedef struct ans{
-  double dist;
-  int *route;
-} Answer;
 
 Answer search(const City *city, int n, int *route, int *visited);
 
