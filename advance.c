@@ -164,11 +164,6 @@ double distance(City a, City b)
   return sqrt(dx * dx + dy * dy);
 }
 
-typedef struct ans{
-  double dist;
-  int *route;
-} Answer;
-
 
 double solvedp(const City *city, int n) {
     double **dp =(double **) malloc(sizeof(double*) * 1<<n);

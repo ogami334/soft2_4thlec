@@ -170,7 +170,7 @@ int main(int argc, char**argv)
   srand((unsigned int)time(NULL));
   double min_dist=100000000;
   int *min_route =(int*) malloc(sizeof(int) * (n-1) );
-  for (int i=0 ;i<1000;i++) {
+  for (int i=0 ;i<100;i++) {
       int *pattern =generate_routes(n);
       Answer ans =local_optimize(n,pattern,city);
       if (ans.dist<min_dist) {
