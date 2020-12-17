@@ -112,7 +112,7 @@ int* generate_patterns(int n) {
 }
 
 Answer local_optimize(int n, int *pattern, City *city) {
-    int flag_optim =1;
+    int flag_optim =0;
     double minval =calculate_total_distance(n,pattern,city);
     int *record =(int *) malloc (sizeof(int) * (n-1) );//全探索中に見つかった一番いいやつを保存しておく
     while (!flag_optim) {
@@ -122,6 +122,10 @@ Answer local_optimize(int n, int *pattern, City *city) {
                 int *tmp_pattern =(int *) malloc (sizeof(int) * (n-1));
                 memcpy(tmp_pattern,pattern,sizeof(int) * (n-1));
                 swap_int(n,tmp_pattern,i,j);
+                /*for (int i=0;i<n-1;i++) {
+                  printf("%d ",tmp_pattern[i]);
+                }
+                printf("\n");*/
                 double value =calculate_total_distance(n, tmp_pattern, city);
                 if (value < minval) {
                     minval =value;
@@ -172,18 +176,28 @@ int main(int argc, char**argv)
   City *city = load_cities(argv[1],&n);
   assert( n > 1 && n <= max_cities); // さすがに都市数100は厳しいので
   srand((unsigned int)time(NULL));
-  int *pattern =generate_patterns(n);
-  Answer ans =local_optimize(n,pattern,city);
-  printf("local optvalue : %lf\n",ans.dist);
-  /*for (int i=0;i<n;i++) {
-      printf("%d ",pattern[i]);
+  double min_dist=100000000;
+  for (int i=0 ;i<100;i++) {
+      int *pattern =generate_patterns(n);
+      Answer ans =local_optimize(n,pattern,city);
+      if (ans.dist<min_dist) {
+        min_dist =ans.dist;
+      }  
+      for (int i=0;i<n-1;i++) {
+        printf("%d ",ans.route[i]);
+      }  
+      printf("\n");
+      printf("local optvalue : %lf\n",ans.dist);
   }
-  printf("\n");*/
+  printf("%lf\n",min_dist);
+  /*int *pattern =generate_patterns(n);
+  Answer ans =local_optimize(n,pattern,city);
+  printf("local optvalue : %lf\n",ans.dist);*/
   // 町の初期配置を表示
-  plot_cities(fp, map, city, n, NULL);
-  sleep(1);
+  //plot_cities(fp, map, city, n, NULL);
+  //sleep(1);
 
-  // 訪れる順序を記録する配列を設定
+  /*// 訪れる順序を記録する配列を設定
   int *route = (int*)calloc(n, sizeof(int));
   // 訪れた町を記録するフラグ
   int *visited = (int*)calloc(n, sizeof(int));
@@ -199,7 +213,7 @@ int main(int argc, char**argv)
   // 動的確保した環境ではfreeをする
   free(route);
   free(visited);
-  free(city);
+  free(city);*/
   
   return 0;
 }
