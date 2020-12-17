@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h> // strtol のエラー判定用
+#include <time.h>
 
 // 町の構造体（今回は2次元座標）を定義
 typedef struct
@@ -42,6 +43,12 @@ double solve(const City *city, int n, int *route, int *visited);
 Map init_map(const int width, const int height);
 void free_map_dot(Map m);
 City *load_cities(const char* filename,int *n);
+int* generate_patterns(int n);//n-1個の都市を訪れる順番を決める関数
+Answer local_optimize(int n,int *pattern,City *city);
+double calculate_total_distance(int n,int *pattern,City *city);
+void swap (int n,int *pattern,int i,int j);
+
+
 
 Map init_map(const int width, const int height)
 {
@@ -58,6 +65,52 @@ void free_map_dot(Map m)
   free(m.dot);
 }
 
+void swap (int n,int *pattern,int i,int j);
+
+double calculate_total_distance(int n,int *pattern,City *city) {
+    double val =0;
+    val +=distance(city[0],city[pattern[0]]);
+    val +=distance(city[pattern[n-1]],city[0]);
+    for (int i=0;i<n-2;i++) {
+        val +=distance(city[pattern[i]],city[pattern[i+1]]);
+    }
+
+}//パターンが与えられたときに距離を返す関数O(n)
+int* generate_patterns(int n) {
+    int *pattern = (int *) malloc (sizeof(int) * (n-1));
+    int flag[n-1];
+    for (int i=0;i<n-1;i++) {
+        flag[i]=0;
+    }
+    int index =0;
+    while (index < n-1)  {
+        printf("%d\n",index);
+        int s =rand()%(n-1) +1;
+        if (flag[s-1] == 0) {
+            pattern[index] =s;
+            index +=1;
+            flag[s-1]=1;
+        }
+    }
+    return pattern;
+}
+
+Answer local_optimize(int n, int *pattern, City *city) {
+    int flag_optim =1;
+    double minval =calculate_total_distance(n,pattern,city);
+    int *record =(int *) malloc (sizeof(int) * (n-1) );
+    while (!flag_optim) {
+        flag_optim =1;//いったん1にしておき、より良い局所解が見つかれば0に更新
+        for (int i=0;i<n-1;i++) {
+            for (int j=i+1;j<n-1;j++) {
+              
+
+                
+            }
+        }
+    }//cityが必要
+    return (Answer) {.sum_d = ,.pattern =};
+}
 City *load_cities(const char *filename, int *n)
 {
   City *city;
@@ -92,7 +145,12 @@ int main(int argc, char**argv)
   int n;
   City *city = load_cities(argv[1],&n);
   assert( n > 1 && n <= max_cities); // さすがに都市数100は厳しいので
-
+  srand((unsigned int)time(NULL));
+  int *pattern =generate_patterns(n);
+  /*for (int i=0;i<n;i++) {
+      printf("%d ",pattern[i]);
+  }
+  printf("\n");*/
   // 町の初期配置を表示
   plot_cities(fp, map, city, n, NULL);
   sleep(1);
@@ -247,3 +305,7 @@ Answer search(const City *city, int n, int *route, int *visited){
   
   return min;
 }
+
+//main関数ないでランダムに初期値を生成(random_generate関数)
+//local_optimize関数で局所最適解を返す
+//今まで得られた解と比較
