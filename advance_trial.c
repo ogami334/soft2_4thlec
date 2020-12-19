@@ -43,12 +43,12 @@ void draw_route(Map map, City *city, int n, const int *route);
 void plot_cities(FILE* fp, Map map, City *city, int n, const int *route);
 double distance(City a, City b);
 double solve(const City *city, int n, int *route, int *visited);
-double solvedp(const City *city, int n);
+double solvedp(const City *city, int n,int *opt_route);
 double dfs(int state,int node,const City *city,double **dp,int n);
 Map init_map(const int width, const int height);
 void free_map_dot(Map m);
 City *load_cities(const char* filename,int *n);
-int *best_route(double **dp,const int n,const City *city);
+int *best_route(double **dp,const int n,const City *city,int *opt_route);
 
 Map init_map(const int width, const int height)
 {
@@ -99,9 +99,14 @@ int main(int argc, char**argv)
   int n;
   City *city = load_cities(argv[1],&n);
   assert( n > 1 && n <= max_cities); // さすがに都市数100は厳しいので
-
-  double ansdp =solvedp(city,n);
+  int *opt_route =(int *) malloc(sizeof(int) * n);
+  double ansdp =solvedp(city,n, opt_route);
   printf("total distance = %lf\n", ansdp);
+  for (int i=0;i<n;i++) {
+        printf("%d -> ",opt_route[n-i-1]);
+    }
+  printf("0\n");
+  free(opt_route);
   free(city);
   
   return 0;
@@ -166,7 +171,7 @@ double distance(City a, City b)
 }
 
 
-double solvedp(const City *city, int n) {
+double solvedp(const City *city, int n,int *opt_route) {
     double **dp =(double **) malloc(sizeof(double*) * 1<<n);
     for (int i=0;i < 1<<n; i++) {
         dp[i] = (double *) malloc(sizeof(double) * n);
@@ -176,11 +181,7 @@ double solvedp(const City *city, int n) {
     }
 
     double res = dfs(0,0,city,dp,n);
-    int *best =best_route(dp,n,city);
-    for (int i=0;i<n;i++) {
-        printf("%d -> ",best[n-i-1]);
-    }
-    printf("0\n");
+    opt_route =best_route(dp,n,city,opt_route);
     for (int i=0;i< 1<<n; i++) {
         free(dp[i]);
     }
@@ -209,8 +210,7 @@ double dfs(int state,int node,const City *city,double **dp,int n) {
 //state　訪問された頂点の集合を管理する整数
 //node　今いる頂点
 
-int *best_route(double **dp,const int n,const City *city) {
-    int *opt_route =(int *) malloc(sizeof(int) * n);
+int *best_route(double **dp,const int n,const City *city,int *opt_route) {
     int state = 0;
     int node =0;
     int num =0;
